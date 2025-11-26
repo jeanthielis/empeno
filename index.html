@@ -202,6 +202,17 @@
         .actions .btn {
             flex: 1;
         }
+        
+        /* Classe específica para os botões principais ficarem lado a lado */
+        .main-actions {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+        
+        .main-actions .btn {
+            flex: 1;
+        }
 
         @media (min-width: 768px) {
             .container {
@@ -241,7 +252,8 @@
 
             <div class="form-group">
                 <label for="batch">Lote</label>
-                <input type="text" id="batch" placeholder="Digite o lote">
+                <input onkeyup="this.value = this.value.toUpperCase();"
+ type="text" id="batch" placeholder="Digite o lote">
             </div>
 
             <div class="form-group">
@@ -258,22 +270,23 @@
         <div class="card">
             <h2 style="margin-bottom: 16px;">Peças</h2>
             <div id="pieces-container">
-                <!-- Peças serão adicionadas aqui dinamicamente -->
-            </div>
+                </div>
             <button id="add-piece" class="btn">Adicionar Peça</button>
         </div>
 
-        <button id="generate-report" class="btn btn-success">Gerar Relatório</button>
+        <div class="main-actions">
+            <button id="new-analysis" class="btn btn-danger">Nova Análise</button>
+            <button id="generate-report" class="btn btn-success">Gerar Relatório</button>
+        </div>
 
         <div id="report-section" class="hidden">
             <div class="card">
                 <h2 style="margin-bottom: 16px;">Relatório</h2>
                 <div id="report-container" class="report-container">
-                    <!-- Relatório será gerado aqui -->
-                </div>
+                    </div>
                 <div class="actions">
                     <button id="copy-report" class="btn">Copiar Relatório</button>
-                    <button id="share-whatsapp" class="btn btn-success">Compartilhar no WhatsApp</button>
+                    <button id="share-whatsapp" class="btn btn-success">WhatsApp</button>
                 </div>
             </div>
         </div>
@@ -284,120 +297,114 @@
             const piecesContainer = document.getElementById('pieces-container');
             const addPieceBtn = document.getElementById('add-piece');
             const generateReportBtn = document.getElementById('generate-report');
+            const newAnalysisBtn = document.getElementById('new-analysis'); // Novo botão
             const reportSection = document.getElementById('report-section');
             const reportContainer = document.getElementById('report-container');
             const copyReportBtn = document.getElementById('copy-report');
             const shareWhatsappBtn = document.getElementById('share-whatsapp');
             
-            let pieceCount = 0;
+            // Campos do formulário para monitorar mudanças
+            const inputsToWatch = ['line', 'reference', 'batch', 'team', 'name'];
 
-            // Adicionar primeira peça
-            addPiece();
+            // 1. Carregar dados salvos ao iniciar
+            loadState();
 
-            // Evento para adicionar nova peça
-            addPieceBtn.addEventListener('click', addPiece);
+            // Se não tiver peças carregadas (primeira vez), adiciona uma
+            if (piecesContainer.children.length === 0) {
+                addPiece(); 
+            }
 
-            // Evento para gerar relatório
+            // Eventos principais
+            addPieceBtn.addEventListener('click', () => {
+                addPiece();
+                saveState(); 
+            });
+            
             generateReportBtn.addEventListener('click', generateReport);
-
-            // Evento para copiar relatório
+            newAnalysisBtn.addEventListener('click', startNewAnalysis); // Evento do novo botão
             copyReportBtn.addEventListener('click', copyReport);
-
-            // Evento para compartilhar no WhatsApp
             shareWhatsappBtn.addEventListener('click', shareWhatsapp);
 
-            // Função para aplicar máscara nos inputs numéricos
+            // Monitorar campos fixos para salvar automaticamente
+            inputsToWatch.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.addEventListener('input', saveState);
+                    if (id === 'line') {
+                        element.addEventListener('change', () => {
+                            saveState();
+                            document.querySelectorAll('.side-value, .central-side-value').forEach(input => {
+                                updateSideStatus.call(input);
+                            });
+                        });
+                    }
+                }
+            });
+
+            // --- NOVA FUNÇÃO: INICIAR NOVA ANÁLISE ---
+            function startNewAnalysis() {
+                // Confirmação para evitar apagar dados por engano
+                if (confirm('Tem certeza? Isso apagará a Referência, Lote e todas as medidas atuais. A Equipe e o Nome serão mantidos.')) {
+                    
+                    // Limpa campos específicos
+                    document.getElementById('reference').value = '';
+                    document.getElementById('batch').value = '';
+                    
+                    // Limpa container de peças
+                    piecesContainer.innerHTML = '';
+                    
+                    // Esconde o relatório se estiver aberto
+                    reportSection.classList.add('hidden');
+                    
+                    // Adiciona uma peça nova zerada
+                    addPiece();
+                    
+                    // Salva o estado "limpo" imediatamente
+                    saveState();
+                    
+                    // Rola a página para o topo
+                    window.scrollTo(0, 0);
+                }
+            }
+
+            // --- FUNÇÃO DE MÁSCARA (DIVISÃO POR 100 - CAIXA ELETRÔNICO) ---
             function applyNumberMask(input) {
-                let previousValue = '';
-                
                 input.addEventListener('input', function(e) {
                     let value = e.target.value;
-                    
-                    // Salva o valor anterior para comparação
-                    previousValue = value;
-                    
-                    // Remove tudo que não é número, sinal negativo ou ponto
-                    value = value.replace(/[^\d.-]/g, '');
-                    
-                    // Permite apenas um sinal negativo no início
-                    if (value.includes('-')) {
-                        if (value.indexOf('-') !== 0) {
-                            value = '-' + value.replace(/-/g, '');
-                        }
+                    const isNegative = value.includes('-');
+                    let cleanValue = value.replace(/\D/g, '');
+
+                    if (cleanValue === '') {
+                        e.target.value = isNegative ? '-' : '';
+                        updateSideStatus.call(e.target);
+                        saveState(); 
+                        return;
                     }
-                    
-                    // Permite apenas um ponto decimal
-                    const parts = value.split('.');
-                    if (parts.length > 2) {
-                        value = parts[0] + '.' + parts.slice(1).join('');
+
+                    const numberValue = parseInt(cleanValue, 10);
+                    let formattedValue = (numberValue / 100).toFixed(2);
+
+                    if (isNegative) {
+                        formattedValue = '-' + formattedValue;
                     }
-                    
-                    // Limita a duas casas decimais durante a digitação
-                    if (parts.length === 2) {
-                        value = parts[0] + '.' + parts[1].slice(0, 2);
-                    }
-                    
-                    // Atualiza o valor apenas se mudou
-                    if (value !== e.target.value) {
-                        e.target.value = value;
-                    }
-                    
-                    // Atualiza o status em tempo real
+
+                    e.target.value = formattedValue;
                     updateSideStatus.call(e.target);
+                    saveState(); 
                 });
-                
-                // Formata apenas quando o campo perde o foco
+
                 input.addEventListener('blur', function() {
-                    let value = this.value;
-                    
-                    if (value && value !== '-') {
-                        // Remove zeros à esquerda desnecessários
-                        value = value.replace(/^0+/, '') || '0';
-                        
-                        // Se começar com ponto, adiciona 0 antes
-                        if (value.startsWith('.')) {
-                            value = '0' + value;
-                        }
-                        
-                        // Se for apenas sinal negativo, coloca 0
-                        if (value === '-') {
-                            value = '-0';
-                        }
-                        
-                        // Se terminar com ponto, remove o ponto
-                        if (value.endsWith('.')) {
-                            value = value.slice(0, -1);
-                        }
-                        
-                        // Converte para número e formata com duas casas decimais
-                        const numValue = parseFloat(value);
-                        if (!isNaN(numValue)) {
-                            // Formata para ter sempre duas casas decimais
-                            value = numValue.toFixed(2);
-                            
-                            // Garante que números negativos mantenham o sinal
-                            if (numValue < 0) {
-                                value = '-' + Math.abs(numValue).toFixed(2);
-                            }
-                        }
-                        
-                        this.value = value;
+                    if (this.value === '-' || this.value === '') {
+                        this.value = '';
+                        updateSideStatus.call(this);
                     }
-                    
-                    updateSideStatus.call(this);
-                });
-                
-                // Permite digitar números negativos pressionando "-" no início
-                input.addEventListener('keydown', function(e) {
-                    if (e.key === '-' && this.selectionStart === 0 && !this.value.includes('-')) {
-                        // Permite adicionar o sinal negativo no início
-                        return true;
-                    }
+                    saveState();
                 });
             }
 
-            function addPiece() {
-                pieceCount++;
+            // --- ADICIONAR PEÇA ---
+            function addPiece(values = null) {
+                const pieceCount = piecesContainer.children.length + 1;
                 const pieceDiv = document.createElement('div');
                 pieceDiv.className = 'piece-container';
                 pieceDiv.innerHTML = `
@@ -409,75 +416,57 @@
                         <div class="side-input">
                             <label>Lado 1</label>
                             <input type="tel" class="side-value" placeholder="0.00">
-                            <div class="status-indicator">
-                                <div class="status-dot"></div>
-                                <span class="status-text"></span>
-                            </div>
+                            <div class="status-indicator"><div class="status-dot"></div><span class="status-text"></span></div>
                         </div>
                         <div class="side-input">
                             <label>Lado 2</label>
                             <input type="tel" class="side-value" placeholder="0.00">
-                            <div class="status-indicator">
-                                <div class="status-dot"></div>
-                                <span class="status-text"></span>
-                            </div>
+                            <div class="status-indicator"><div class="status-dot"></div><span class="status-text"></span></div>
                         </div>
                         <div class="side-input">
                             <label>Lado 3</label>
                             <input type="tel" class="side-value" placeholder="0.00">
-                            <div class="status-indicator">
-                                <div class="status-dot"></div>
-                                <span class="status-text"></span>
-                            </div>
+                            <div class="status-indicator"><div class="status-dot"></div><span class="status-text"></span></div>
                         </div>
                         <div class="side-input">
                             <label>Lado 4</label>
                             <input type="tel" class="side-value" placeholder="0.00">
-                            <div class="status-indicator">
-                                <div class="status-dot"></div>
-                                <span class="status-text"></span>
-                            </div>
+                            <div class="status-indicator"><div class="status-dot"></div><span class="status-text"></span></div>
                         </div>
                     </div>
                     <div style="margin-top: 12px;">
                         <div class="side-input">
                             <label>Lado Central 1</label>
                             <input type="tel" class="central-side-value" placeholder="0.00">
-                            <div class="status-indicator">
-                                <div class="status-dot"></div>
-                                <span class="status-text"></span>
-                            </div>
+                            <div class="status-indicator"><div class="status-dot"></div><span class="status-text"></span></div>
                         </div>
                         <div class="side-input">
                             <label>Lado Central 2</label>
                             <input type="tel" class="central-side-value" placeholder="0.00">
-                            <div class="status-indicator">
-                                <div class="status-dot"></div>
-                                <span class="status-text"></span>
-                            </div>
+                            <div class="status-indicator"><div class="status-dot"></div><span class="status-text"></span></div>
                         </div>
                     </div>
                 `;
 
                 piecesContainer.appendChild(pieceDiv);
 
-                // Aplicar máscara aos inputs numéricos
-                const numberInputs = pieceDiv.querySelectorAll('.side-value, .central-side-value');
-                numberInputs.forEach(input => {
+                const inputs = pieceDiv.querySelectorAll('input');
+                inputs.forEach((input, index) => {
                     applyNumberMask(input);
-                });
-
-                // Adicionar evento para remover peça
-                const removeBtn = pieceDiv.querySelector('.remove-piece');
-                removeBtn.addEventListener('click', function() {
-                    if (pieceCount > 1) {
-                        piecesContainer.removeChild(pieceDiv);
-                        pieceCount--;
-                        updatePieceNumbers();
+                    if (values && values[index]) {
+                        input.value = values[index];
+                        updateSideStatus.call(input); 
                     }
                 });
 
-                updateSideStatus.call(numberInputs[0]);
+                const removeBtn = pieceDiv.querySelector('.remove-piece');
+                removeBtn.addEventListener('click', function() {
+                    if (piecesContainer.children.length > 1) {
+                        piecesContainer.removeChild(pieceDiv);
+                        updatePieceNumbers();
+                        saveState(); 
+                    }
+                });
             }
 
             function updatePieceNumbers() {
@@ -506,10 +495,8 @@
                 let isValid = false;
                 
                 if (isCentral) {
-                    // Empeno Central: -1.80 a +1.80 para todas as linhas
                     isValid = value >= -1.80 && value <= 1.80;
                 } else {
-                    // Empeno Lateral
                     if (line === '1') {
                         isValid = value >= -0.40 && value <= 1.00;
                     } else if (line === '2' || line === '3') {
@@ -528,6 +515,57 @@
                 }
             }
 
+            // --- SALVAR ESTADO ---
+            function saveState() {
+                const state = {
+                    line: document.getElementById('line').value,
+                    reference: document.getElementById('reference').value,
+                    batch: document.getElementById('batch').value,
+                    team: document.getElementById('team').value,
+                    name: document.getElementById('name').value,
+                    pieces: []
+                };
+
+                document.querySelectorAll('.piece-container').forEach(piece => {
+                    const pieceValues = [];
+                    piece.querySelectorAll('input').forEach(input => {
+                        pieceValues.push(input.value);
+                    });
+                    state.pieces.push(pieceValues);
+                });
+
+                localStorage.setItem('empenoReportState', JSON.stringify(state));
+                localStorage.setItem('userTeam', state.team);
+                localStorage.setItem('userName', state.name);
+            }
+
+            // --- CARREGAR ESTADO ---
+            function loadState() {
+                const savedState = localStorage.getItem('empenoReportState');
+                const savedTeam = localStorage.getItem('userTeam');
+                const savedName = localStorage.getItem('userName');
+
+                if (savedState) {
+                    const state = JSON.parse(savedState);
+                    
+                    document.getElementById('line').value = state.line || '';
+                    document.getElementById('reference').value = state.reference || '';
+                    document.getElementById('batch').value = state.batch || '';
+                    document.getElementById('team').value = state.team || savedTeam || '';
+                    document.getElementById('name').value = state.name || savedName || '';
+
+                    if (state.pieces && state.pieces.length > 0) {
+                        piecesContainer.innerHTML = ''; 
+                        state.pieces.forEach(pieceValues => {
+                            addPiece(pieceValues);
+                        });
+                    }
+                } else {
+                    if (savedTeam) document.getElementById('team').value = savedTeam;
+                    if (savedName) document.getElementById('name').value = savedName;
+                }
+            }
+
             function generateReport() {
                 const line = document.getElementById('line').value;
                 const reference = document.getElementById('reference').value;
@@ -535,14 +573,27 @@
                 const team = document.getElementById('team').value;
                 const name = document.getElementById('name').value;
 
-                // Validar campos obrigatórios
                 if (!line || !reference || !batch || !team || !name) {
                     alert('Por favor, preencha todos os campos obrigatórios.');
                     return;
                 }
 
+                const now = new Date();
+                const dateStr = now.toLocaleDateString('pt-BR');
+                const timeStr = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+                let rangeLateral = "";
+                const rangeCentral = "-1.80 a +1.80";
+
+                if (line === '1') {
+                    rangeLateral = "-0.40 a +1.00";
+                } else if (line === '2' || line === '3') {
+                    rangeLateral = "-1.00 a +1.50";
+                }
+
                 let report = `RELATÓRIO DE EMPENO\n`;
-                report += `===================\n\n`;
+                report += `===================\n`;
+                report += `Data: ${dateStr} - Hora: ${timeStr}\n\n`;
                 report += `Linha: ${line}\n`;
                 report += `Referência: ${reference}\n`;
                 report += `Lote: ${batch}\n`;
@@ -551,31 +602,33 @@
                 report += `PEÇAS ANALISADAS:\n`;
                 report += `===================\n\n`;
 
+                report += `Range Lateral: ${rangeLateral}\n`;
+                report += `Range Central: ${rangeCentral}\n\n`;
+                
+
                 const pieces = document.querySelectorAll('.piece-container');
                 pieces.forEach((piece, index) => {
                     report += `Peça ${index + 1}:\n`;
                     
-                    // Lados laterais
                     const sideInputs = piece.querySelectorAll('.side-value');
                     sideInputs.forEach((input, sideIndex) => {
                         const value = input.value;
                         if (value) {
                             const statusIndicator = input.parentElement.querySelector('.status-indicator');
                             const statusText = statusIndicator.querySelector('.status-text').textContent;
-                            const statusSymbol = statusText === 'Dentro do range' ? '✅' : '❌';
-                            report += `  Lado ${sideIndex + 1}: ${value} ${statusSymbol}\n`;
+                            const statusSymbol = statusText.includes('Dentro') ? '✅' : '❌';
+                            report += `${statusSymbol} Lado ${sideIndex + 1}: ${value}\n`;
                         }
                     });
                     
-                    // Lados centrais
                     const centralSideInputs = piece.querySelectorAll('.central-side-value');
                     centralSideInputs.forEach((input, centralIndex) => {
                         const value = input.value;
                         if (value) {
                             const statusIndicator = input.parentElement.querySelector('.status-indicator');
                             const statusText = statusIndicator.querySelector('.status-text').textContent;
-                            const statusSymbol = statusText === 'Dentro do range' ? '✅' : '❌';
-                            report += `  Lado Central ${centralIndex + 1}: ${value} ${statusSymbol}\n`;
+                            const statusSymbol = statusText.includes('Dentro') ? '✅' : '❌';
+                            report += `${statusSymbol} Lado Central ${centralIndex + 1}: ${value} \n`;
                         }
                     });
                     
@@ -584,15 +637,15 @@
 
                 reportContainer.textContent = report;
                 reportSection.classList.remove('hidden');
+                
+                // Rola suavemente até o relatório
+                reportSection.scrollIntoView({ behavior: 'smooth' });
             }
 
             function copyReport() {
                 const reportText = reportContainer.textContent;
                 navigator.clipboard.writeText(reportText).then(() => {
                     alert('Relatório copiado para a área de transferência!');
-                }).catch(err => {
-                    console.error('Erro ao copiar: ', err);
-                    alert('Erro ao copiar o relatório.');
                 });
             }
 
