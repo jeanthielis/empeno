@@ -152,6 +152,14 @@
             grid-template-columns: 1fr 1fr;
             gap: 12px;
         }
+        
+        /* Container específico para inputs extras (Central e Diagonal) ficarem lado a lado */
+        .extra-inputs-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 12px;
+        }
 
         .side-input {
             display: flex;
@@ -203,7 +211,6 @@
             flex: 1;
         }
         
-        /* Classe específica para os botões principais ficarem lado a lado */
         .main-actions {
             display: flex;
             gap: 12px;
@@ -297,7 +304,7 @@
             const piecesContainer = document.getElementById('pieces-container');
             const addPieceBtn = document.getElementById('add-piece');
             const generateReportBtn = document.getElementById('generate-report');
-            const newAnalysisBtn = document.getElementById('new-analysis'); // Novo botão
+            const newAnalysisBtn = document.getElementById('new-analysis');
             const reportSection = document.getElementById('report-section');
             const reportContainer = document.getElementById('report-container');
             const copyReportBtn = document.getElementById('copy-report');
@@ -321,7 +328,7 @@
             });
             
             generateReportBtn.addEventListener('click', generateReport);
-            newAnalysisBtn.addEventListener('click', startNewAnalysis); // Evento do novo botão
+            newAnalysisBtn.addEventListener('click', startNewAnalysis);
             copyReportBtn.addEventListener('click', copyReport);
             shareWhatsappBtn.addEventListener('click', shareWhatsapp);
 
@@ -333,7 +340,7 @@
                     if (id === 'line') {
                         element.addEventListener('change', () => {
                             saveState();
-                            document.querySelectorAll('.side-value, .central-side-value').forEach(input => {
+                            document.querySelectorAll('.side-value, .central-side-value, .diagonal-value').forEach(input => {
                                 updateSideStatus.call(input);
                             });
                         });
@@ -341,28 +348,15 @@
                 }
             });
 
-            // --- NOVA FUNÇÃO: INICIAR NOVA ANÁLISE ---
+            // --- FUNÇÃO: INICIAR NOVA ANÁLISE ---
             function startNewAnalysis() {
-                // Confirmação para evitar apagar dados por engano
                 if (confirm('Tem certeza? Isso apagará a Referência, Lote e todas as medidas atuais. A Equipe e o Nome serão mantidos.')) {
-                    
-                    // Limpa campos específicos
                     document.getElementById('reference').value = '';
                     document.getElementById('batch').value = '';
-                    
-                    // Limpa container de peças
                     piecesContainer.innerHTML = '';
-                    
-                    // Esconde o relatório se estiver aberto
                     reportSection.classList.add('hidden');
-                    
-                    // Adiciona uma peça nova zerada
                     addPiece();
-                    
-                    // Salva o estado "limpo" imediatamente
                     saveState();
-                    
-                    // Rola a página para o topo
                     window.scrollTo(0, 0);
                 }
             }
@@ -382,6 +376,7 @@
                     }
 
                     const numberValue = parseInt(cleanValue, 10);
+                    // Formata para ter 2 casas decimais (Ex: 1234 virar 12.34)
                     let formattedValue = (numberValue / 100).toFixed(2);
 
                     if (isNegative) {
@@ -407,6 +402,7 @@
                 const pieceCount = piecesContainer.children.length + 1;
                 const pieceDiv = document.createElement('div');
                 pieceDiv.className = 'piece-container';
+                // HTML Atualizado com Diagonal Mesa
                 pieceDiv.innerHTML = `
                     <div class="piece-header">
                         <span class="piece-title">Peça ${pieceCount}</span>
@@ -434,7 +430,8 @@
                             <div class="status-indicator"><div class="status-dot"></div><span class="status-text"></span></div>
                         </div>
                     </div>
-                    <div style="margin-top: 12px;">
+                    
+                    <div class="extra-inputs-row">
                         <div class="side-input">
                             <label>Lado Central 1</label>
                             <input type="tel" class="central-side-value" placeholder="0.00">
@@ -443,6 +440,19 @@
                         <div class="side-input">
                             <label>Lado Central 2</label>
                             <input type="tel" class="central-side-value" placeholder="0.00">
+                            <div class="status-indicator"><div class="status-dot"></div><span class="status-text"></span></div>
+                        </div>
+                    </div>
+
+                    <div class="extra-inputs-row">
+                        <div class="side-input">
+                            <label>Diagonal Mesa 1</label>
+                            <input type="tel" class="diagonal-value" placeholder="00.00">
+                            <div class="status-indicator"><div class="status-dot"></div><span class="status-text"></span></div>
+                        </div>
+                        <div class="side-input">
+                            <label>Diagonal Mesa 2</label>
+                            <input type="tel" class="diagonal-value" placeholder="00.00">
                             <div class="status-indicator"><div class="status-dot"></div><span class="status-text"></span></div>
                         </div>
                     </div>
@@ -491,10 +501,12 @@
 
                 const line = document.getElementById('line').value;
                 const isCentral = sideInput.classList.contains('central-side-value');
+                const isDiagonal = sideInput.classList.contains('diagonal-value'); // Verifica se é diagonal
                 
                 let isValid = false;
                 
-                if (isCentral) {
+                // Lógica de validação (Central e Diagonal usam a mesma regra)
+                if (isCentral || isDiagonal) {
                     isValid = value >= -1.80 && value <= 1.80;
                 } else {
                     if (line === '1') {
@@ -603,13 +615,14 @@
                 report += `===================\n\n`;
 
                 report += `Range Lateral: ${rangeLateral}\n`;
-                report += `Range Central: ${rangeCentral}\n\n`;
+                report += `Range Central e Diagonal: ${rangeCentral}\n\n`;
                 
 
                 const pieces = document.querySelectorAll('.piece-container');
                 pieces.forEach((piece, index) => {
                     report += `Peça ${index + 1}:\n`;
                     
+                    // Lados Normais
                     const sideInputs = piece.querySelectorAll('.side-value');
                     sideInputs.forEach((input, sideIndex) => {
                         const value = input.value;
@@ -621,6 +634,7 @@
                         }
                     });
                     
+                    // Lados Centrais
                     const centralSideInputs = piece.querySelectorAll('.central-side-value');
                     centralSideInputs.forEach((input, centralIndex) => {
                         const value = input.value;
@@ -629,6 +643,18 @@
                             const statusText = statusIndicator.querySelector('.status-text').textContent;
                             const statusSymbol = statusText.includes('Dentro') ? '✅' : '❌';
                             report += `${statusSymbol} Lado Central ${centralIndex + 1}: ${value} \n`;
+                        }
+                    });
+
+                    // Diagonais (Nova seção no relatório)
+                    const diagonalInputs = piece.querySelectorAll('.diagonal-value');
+                    diagonalInputs.forEach((input, diagIndex) => {
+                        const value = input.value;
+                        if (value) {
+                            const statusIndicator = input.parentElement.querySelector('.status-indicator');
+                            const statusText = statusIndicator.querySelector('.status-text').textContent;
+                            const statusSymbol = statusText.includes('Dentro') ? '✅' : '❌';
+                            report += `${statusSymbol} Diagonal Mesa ${diagIndex + 1}: ${value} \n`;
                         }
                     });
                     
