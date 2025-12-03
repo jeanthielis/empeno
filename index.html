@@ -120,7 +120,7 @@
         .piece-container {
             border: 1px solid var(--border);
             border-radius: 6px;
-            padding: 16px; /* Aumentado padding interno */
+            padding: 16px;
             margin-bottom: 12px;
         }
 
@@ -151,7 +151,6 @@
             padding-left: 8px;
         }
         
-        /* Remove margem do primeiro título */
         .section-title:first-of-type {
             margin-top: 0;
         }
@@ -655,29 +654,40 @@
 
                 const pieces = document.querySelectorAll('.piece-container');
                 pieces.forEach((piece, index) => {
-                    report += `>> PEÇA ${index + 1} <<\n`;
+                    report += `>> PEÇA ${index + 1} <<\n\n`;
                     
-                    // Lateral Vertical
-                    let hasLateral = false;
+                    // -- SEÇÃO 1: LATERAL VERTICAL --
+                    let lateralOutput = "";
                     const sideInputs = piece.querySelectorAll('.side-value');
                     sideInputs.forEach((input, i) => {
                         if (input.value) {
                             const statusText = input.parentElement.querySelector('.status-text').textContent;
                             const icon = statusText === 'OK' ? '✅' : '❌';
-                            report += `${icon} Lat. Vertical - Lado ${letters[i]}: ${input.value}\n`;
-                            hasLateral = true;
+                            lateralOutput += `${icon} Lado ${letters[i]}: ${input.value}\n`;
                         }
                     });
+                    
+                    if (lateralOutput) {
+                        report += `*LATERAL VERTICAL*\n` + lateralOutput + `\n`;
+                    }
 
-                    // Vertical Mesa
+                    // -- SEÇÃO 2: VERTICAL MESA --
+                    let verticalMesaOutput = "";
                     const verticalMesaInputs = piece.querySelectorAll('.vertical-mesa-value');
                     verticalMesaInputs.forEach((input, i) => {
                         if (input.value) {
                             const statusText = input.parentElement.querySelector('.status-text').textContent;
                             const icon = statusText === 'OK' ? '✅' : '❌';
-                            report += `${icon} Vert. Mesa - Lado ${letters[i]}: ${input.value}\n`;
+                            verticalMesaOutput += `${icon} Lado ${letters[i]}: ${input.value}\n`;
                         }
                     });
+
+                    if (verticalMesaOutput) {
+                        report += `*VERTICAL MESA*\n` + verticalMesaOutput + `\n`;
+                    }
+                    
+                    // -- SEÇÃO 3: CENTRAL E DIAGONAL --
+                    let centralDiagOutput = "";
                     
                     // Central
                     const centralInputs = piece.querySelectorAll('.central-side-value');
@@ -685,7 +695,7 @@
                         if (input.value) {
                             const statusText = input.parentElement.querySelector('.status-text').textContent;
                             const icon = statusText === 'OK' ? '✅' : '❌';
-                            report += `${icon} Central ${i + 1}: ${input.value}\n`;
+                            centralDiagOutput += `${icon} Central ${i + 1}: ${input.value}\n`;
                         }
                     });
 
@@ -695,11 +705,15 @@
                         if (input.value) {
                             const statusText = input.parentElement.querySelector('.status-text').textContent;
                             const icon = statusText === 'OK' ? '✅' : '❌';
-                            report += `${icon} Diag. Mesa ${i + 1}: ${input.value}\n`;
+                            centralDiagOutput += `${icon} Diag. Mesa ${i + 1}: ${input.value}\n`;
                         }
                     });
+
+                    if (centralDiagOutput) {
+                        report += `*CENTRAL E DIAGONAL*\n` + centralDiagOutput;
+                    }
                     
-                    report += '\n-------------------\n';
+                    report += '\n-------------------\n\n';
                 });
 
                 reportContainer.textContent = report;
