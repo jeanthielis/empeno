@@ -66,6 +66,7 @@
             margin-bottom: 6px;
             font-weight: 500;
             color: var(--text-secondary);
+            font-size: 0.9rem;
         }
 
         input, select {
@@ -119,7 +120,7 @@
         .piece-container {
             border: 1px solid var(--border);
             border-radius: 6px;
-            padding: 12px;
+            padding: 16px; /* Aumentado padding interno */
             margin-bottom: 12px;
         }
 
@@ -127,11 +128,32 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 12px;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border);
         }
 
         .piece-title {
-            font-weight: 500;
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: var(--text-primary);
+        }
+
+        .section-title {
+            color: var(--accent);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 16px;
+            margin-bottom: 8px;
+            font-weight: 700;
+            border-left: 3px solid var(--accent);
+            padding-left: 8px;
+        }
+        
+        /* Remove margem do primeiro título */
+        .section-title:first-of-type {
+            margin-top: 0;
         }
 
         .remove-piece {
@@ -151,14 +173,7 @@
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 12px;
-            margin-bottom: 12px;
-        }
-        
-        .extra-inputs-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin-top: 12px;
+            margin-bottom: 8px;
         }
 
         .side-input {
@@ -169,14 +184,18 @@
         .status-indicator {
             display: flex;
             align-items: center;
-            margin-top: 8px;
+            margin-top: 6px;
         }
 
         .status-dot {
-            width: 12px;
-            height: 12px;
+            width: 10px;
+            height: 10px;
             border-radius: 50%;
-            margin-right: 8px;
+            margin-right: 6px;
+        }
+
+        .status-text {
+            font-size: 0.8rem;
         }
 
         .status-good {
@@ -259,8 +278,7 @@
 
             <div class="form-group">
                 <label for="batch">Lote</label>
-                <input onkeyup="this.value = this.value.toUpperCase();"
- type="text" id="batch" placeholder="Digite o lote">
+                <input onkeyup="this.value = this.value.toUpperCase();" type="text" id="batch" placeholder="Digite o lote">
             </div>
 
             <div class="form-group">
@@ -310,18 +328,14 @@
             const copyReportBtn = document.getElementById('copy-report');
             const shareWhatsappBtn = document.getElementById('share-whatsapp');
             
-            // Campos do formulário para monitorar mudanças
             const inputsToWatch = ['line', 'reference', 'batch', 'team', 'name'];
 
-            // 1. Carregar dados salvos ao iniciar
             loadState();
 
-            // Se não tiver peças carregadas (primeira vez), adiciona uma
             if (piecesContainer.children.length === 0) {
                 addPiece(); 
             }
 
-            // Eventos principais
             addPieceBtn.addEventListener('click', () => {
                 addPiece();
                 saveState(); 
@@ -332,7 +346,6 @@
             copyReportBtn.addEventListener('click', copyReport);
             shareWhatsappBtn.addEventListener('click', shareWhatsapp);
 
-            // Monitorar campos fixos para salvar automaticamente
             inputsToWatch.forEach(id => {
                 const element = document.getElementById(id);
                 if (element) {
@@ -348,7 +361,6 @@
                 }
             });
 
-            // --- FUNÇÃO: INICIAR NOVA ANÁLISE ---
             function startNewAnalysis() {
                 if (confirm('Tem certeza? Isso apagará a Referência, Lote e todas as medidas atuais. A Equipe e o Nome serão mantidos.')) {
                     document.getElementById('reference').value = '';
@@ -361,7 +373,6 @@
                 }
             }
 
-            // --- FUNÇÃO DE MÁSCARA (DIVISÃO POR 100 - CAIXA ELETRÔNICO) ---
             function applyNumberMask(input) {
                 input.addEventListener('input', function(e) {
                     let value = e.target.value;
@@ -376,7 +387,6 @@
                     }
 
                     const numberValue = parseInt(cleanValue, 10);
-                    // Formata para ter 2 casas decimais
                     let formattedValue = (numberValue / 100).toFixed(2);
 
                     if (isNegative) {
@@ -397,85 +407,85 @@
                 });
             }
 
-            // --- ADICIONAR PEÇA ---
             function addPiece(values = null) {
                 const pieceCount = piecesContainer.children.length + 1;
                 const pieceDiv = document.createElement('div');
                 pieceDiv.className = 'piece-container';
                 
+                // HTML Organizado com Títulos de Seção
                 pieceDiv.innerHTML = `
                     <div class="piece-header">
                         <span class="piece-title">Peça ${pieceCount}</span>
                         <button class="remove-piece">×</button>
                     </div>
                     
+                    <div class="section-title">Lateral Vertical</div>
                     <div class="sides-container">
                         <div class="side-input">
-                            <label>Vertical Lado 1</label>
+                            <label>Lado A</label>
                             <input type="tel" class="side-value" placeholder="0.00">
                             <div class="status-indicator"><div class="status-dot"></div><span class="status-text"></span></div>
                         </div>
                         <div class="side-input">
-                            <label>Vertical Lado 2</label>
+                            <label>Lado B</label>
                             <input type="tel" class="side-value" placeholder="0.00">
                             <div class="status-indicator"><div class="status-dot"></div><span class="status-text"></span></div>
                         </div>
                         <div class="side-input">
-                            <label>Vertical Lado 3</label>
+                            <label>Lado C</label>
                             <input type="tel" class="side-value" placeholder="0.00">
                             <div class="status-indicator"><div class="status-dot"></div><span class="status-text"></span></div>
                         </div>
                         <div class="side-input">
-                            <label>Vertical Lado 4</label>
+                            <label>Lado D</label>
                             <input type="tel" class="side-value" placeholder="0.00">
                             <div class="status-indicator"><div class="status-dot"></div><span class="status-text"></span></div>
                         </div>
                     </div>
                     
+                    <div class="section-title">Vertical Mesa</div>
                     <div class="sides-container">
                         <div class="side-input">
-                            <label>Vertical Mesa 1</label>
+                            <label>Lado A</label>
                             <input type="tel" class="vertical-mesa-value" placeholder="0.00">
                             <div class="status-indicator"><div class="status-dot"></div><span class="status-text"></span></div>
                         </div>
                         <div class="side-input">
-                            <label>Vertical Mesa 2</label>
+                            <label>Lado B</label>
                             <input type="tel" class="vertical-mesa-value" placeholder="0.00">
                             <div class="status-indicator"><div class="status-dot"></div><span class="status-text"></span></div>
                         </div>
                         <div class="side-input">
-                            <label>Vertical Mesa 3</label>
+                            <label>Lado C</label>
                             <input type="tel" class="vertical-mesa-value" placeholder="0.00">
                             <div class="status-indicator"><div class="status-dot"></div><span class="status-text"></span></div>
                         </div>
                         <div class="side-input">
-                            <label>Vertical Mesa 4</label>
+                            <label>Lado D</label>
                             <input type="tel" class="vertical-mesa-value" placeholder="0.00">
                             <div class="status-indicator"><div class="status-dot"></div><span class="status-text"></span></div>
                         </div>
                     </div>
 
-                    <div class="extra-inputs-row">
+                    <div class="section-title">Central e Diagonal</div>
+                    <div class="sides-container">
                         <div class="side-input">
-                            <label>Lado Central 1</label>
+                            <label>Central 1</label>
                             <input type="tel" class="central-side-value" placeholder="0.00">
                             <div class="status-indicator"><div class="status-dot"></div><span class="status-text"></span></div>
                         </div>
                         <div class="side-input">
-                            <label>Lado Central 2</label>
+                            <label>Central 2</label>
                             <input type="tel" class="central-side-value" placeholder="0.00">
                             <div class="status-indicator"><div class="status-dot"></div><span class="status-text"></span></div>
                         </div>
-                    </div>
-
-                    <div class="extra-inputs-row">
                         <div class="side-input">
-                            <label>Diagonal Mesa 1</label>
+                            <label>Diag. Mesa 1</label>
                             <input type="tel" class="diagonal-value" placeholder="0.00">
                             <div class="status-indicator"><div class="status-dot"></div><span class="status-text"></span></div>
                         </div>
                         <div class="side-input">
-                            <label>Diagonal Mesa 2</label>
+                            <label>Diag. Mesa 2</label>
                             <input type="tel" class="diagonal-value" placeholder="0.00">
                             <div class="status-indicator"><div class="status-dot"></div><span class="status-text"></span></div>
                         </div>
@@ -530,12 +540,10 @@
                 
                 let isValid = false;
                 
-                // Lógica de validação
-                // Central, Diagonal e Vertical Mesa usam o range (-1.80 a +1.80)
                 if (isCentral || isDiagonal || isVerticalMesa) {
                     isValid = value >= -1.80 && value <= 1.80;
                 } else {
-                    // Vertical Lados (antigo Lado) varia com a Linha
+                    // Lateral Vertical (antigo side-value)
                     if (line === '1') {
                         isValid = value >= -0.40 && value <= 1.00;
                     } else if (line === '2' || line === '3') {
@@ -545,16 +553,15 @@
 
                 if (isValid) {
                     statusDot.className = 'status-dot status-good';
-                    statusText.textContent = 'Dentro do range';
+                    statusText.textContent = 'OK';
                     statusText.style.color = '#4caf50';
                 } else {
                     statusDot.className = 'status-dot status-bad';
-                    statusText.textContent = 'Fora do range';
+                    statusText.textContent = 'Fora';
                     statusText.style.color = '#f44336';
                 }
             }
 
-            // --- SALVAR ESTADO ---
             function saveState() {
                 const state = {
                     line: document.getElementById('line').value,
@@ -578,7 +585,6 @@
                 localStorage.setItem('userName', state.name);
             }
 
-            // --- CARREGAR ESTADO ---
             function loadState() {
                 const savedState = localStorage.getItem('empenoReportState');
                 const savedTeam = localStorage.getItem('userTeam');
@@ -641,76 +647,71 @@
                 report += `PEÇAS ANALISADAS:\n`;
                 report += `===================\n\n`;
 
-                report += `Range Lateral (Vertical Lado): ${rangeLateral}\n`;
-                report += `Range Central/Mesa: ${rangeCentral}\n\n`;
+                report += `Range Lateral Vert.: ${rangeLateral}\n`;
+                report += `Range Mesa/Central: ${rangeCentral}\n\n`;
                 
+                // Mapeamento de letras para os lados
+                const letters = ['A', 'B', 'C', 'D'];
 
                 const pieces = document.querySelectorAll('.piece-container');
                 pieces.forEach((piece, index) => {
-                    report += `Peça ${index + 1}:\n`;
+                    report += `>> PEÇA ${index + 1} <<\n`;
                     
-                    // Vertical Lados (Antes Lado 1..4)
+                    // Lateral Vertical
+                    let hasLateral = false;
                     const sideInputs = piece.querySelectorAll('.side-value');
-                    sideInputs.forEach((input, sideIndex) => {
-                        const value = input.value;
-                        if (value) {
-                            const statusIndicator = input.parentElement.querySelector('.status-indicator');
-                            const statusText = statusIndicator.querySelector('.status-text').textContent;
-                            const statusSymbol = statusText.includes('Dentro') ? '✅' : '❌';
-                            report += `${statusSymbol} Vertical Lado ${sideIndex + 1}: ${value}\n`;
+                    sideInputs.forEach((input, i) => {
+                        if (input.value) {
+                            const statusText = input.parentElement.querySelector('.status-text').textContent;
+                            const icon = statusText === 'OK' ? '✅' : '❌';
+                            report += `${icon} Lat. Vertical - Lado ${letters[i]}: ${input.value}\n`;
+                            hasLateral = true;
                         }
                     });
 
                     // Vertical Mesa
                     const verticalMesaInputs = piece.querySelectorAll('.vertical-mesa-value');
-                    verticalMesaInputs.forEach((input, vmIndex) => {
-                        const value = input.value;
-                        if (value) {
-                            const statusIndicator = input.parentElement.querySelector('.status-indicator');
-                            const statusText = statusIndicator.querySelector('.status-text').textContent;
-                            const statusSymbol = statusText.includes('Dentro') ? '✅' : '❌';
-                            report += `${statusSymbol} Vertical Mesa ${vmIndex + 1}: ${value}\n`;
+                    verticalMesaInputs.forEach((input, i) => {
+                        if (input.value) {
+                            const statusText = input.parentElement.querySelector('.status-text').textContent;
+                            const icon = statusText === 'OK' ? '✅' : '❌';
+                            report += `${icon} Vert. Mesa - Lado ${letters[i]}: ${input.value}\n`;
                         }
                     });
                     
-                    // Lados Centrais
-                    const centralSideInputs = piece.querySelectorAll('.central-side-value');
-                    centralSideInputs.forEach((input, centralIndex) => {
-                        const value = input.value;
-                        if (value) {
-                            const statusIndicator = input.parentElement.querySelector('.status-indicator');
-                            const statusText = statusIndicator.querySelector('.status-text').textContent;
-                            const statusSymbol = statusText.includes('Dentro') ? '✅' : '❌';
-                            report += `${statusSymbol} Lado Central ${centralIndex + 1}: ${value} \n`;
+                    // Central
+                    const centralInputs = piece.querySelectorAll('.central-side-value');
+                    centralInputs.forEach((input, i) => {
+                        if (input.value) {
+                            const statusText = input.parentElement.querySelector('.status-text').textContent;
+                            const icon = statusText === 'OK' ? '✅' : '❌';
+                            report += `${icon} Central ${i + 1}: ${input.value}\n`;
                         }
                     });
 
-                    // Diagonais
+                    // Diagonal
                     const diagonalInputs = piece.querySelectorAll('.diagonal-value');
-                    diagonalInputs.forEach((input, diagIndex) => {
-                        const value = input.value;
-                        if (value) {
-                            const statusIndicator = input.parentElement.querySelector('.status-indicator');
-                            const statusText = statusIndicator.querySelector('.status-text').textContent;
-                            const statusSymbol = statusText.includes('Dentro') ? '✅' : '❌';
-                            report += `${statusSymbol} Diagonal Mesa ${diagIndex + 1}: ${value} \n`;
+                    diagonalInputs.forEach((input, i) => {
+                        if (input.value) {
+                            const statusText = input.parentElement.querySelector('.status-text').textContent;
+                            const icon = statusText === 'OK' ? '✅' : '❌';
+                            report += `${icon} Diag. Mesa ${i + 1}: ${input.value}\n`;
                         }
                     });
                     
-                    report += '\n';
+                    report += '\n-------------------\n';
                 });
 
                 reportContainer.textContent = report;
                 reportSection.classList.remove('hidden');
                 
-                // Rola suavemente até o relatório
                 reportSection.scrollIntoView({ behavior: 'smooth' });
             }
 
             function copyReport() {
                 const reportText = reportContainer.textContent;
                 navigator.clipboard.writeText(reportText).then(() => {
-                    alert('Relatório copiado para a área de transferência!');
+                    alert('Relatório copiado!');
                 });
             }
 
