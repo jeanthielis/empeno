@@ -478,11 +478,7 @@
                             <input type="tel" class="central-side-value" placeholder="0.00">
                             <div class="status-indicator"><div class="status-dot"></div><span class="status-text"></span></div>
                         </div>
-                        <div class="side-input">
-                            <label>Diag. Mesa 1</label>
-                            <input type="tel" class="diagonal-value" placeholder="0.00">
-                            <div class="status-indicator"><div class="status-dot"></div><span class="status-text"></span></div>
-                        </div>
+                        
                         <div class="side-input">
                             <label>Diag. Mesa 2</label>
                             <input type="tel" class="diagonal-value" placeholder="0.00">
@@ -646,11 +642,11 @@
                 report += `PEÇAS ANALISADAS:\n`;
                 report += `===================\n\n`;
 
-                report += `Range Lateral Vert.: ${rangeLateral}\n`;
-                report += `Range Mesa/Central: ${rangeCentral}\n\n`;
+                report += `Range Lateral: ${rangeLateral}\n`;
+                report += `Range Central: ${rangeCentral}\n\n`;
                 
                 // Mapeamento de letras para os lados
-                const letters = ['A', 'B', 'C', 'D'];
+                const letters = ['A', 'B', 'C', 'D','E', 'F', 'G', 'H'];
 
                 const pieces = document.querySelectorAll('.piece-container');
                 pieces.forEach((piece, index) => {
@@ -668,7 +664,7 @@
                     });
                     
                     if (lateralOutput) {
-                        report += `*LATERAL VERTICAL*\n` + lateralOutput + `\n`;
+                        report += `*VERTICAL LATERAL*\n` + lateralOutput + `\n`;
                     }
 
                     // -- SEÇÃO 2: VERTICAL MESA --
@@ -683,21 +679,13 @@
                     });
 
                     if (verticalMesaOutput) {
-                        report += `*VERTICAL MESA*\n` + verticalMesaOutput + `\n`;
+                        report += `*DIAGONAL MESA*\n` + verticalMesaOutput + `\n`;
                     }
                     
                     // -- SEÇÃO 3: CENTRAL E DIAGONAL --
                     let centralDiagOutput = "";
                     
-                    // Central
-                    const centralInputs = piece.querySelectorAll('.central-side-value');
-                    centralInputs.forEach((input, i) => {
-                        if (input.value) {
-                            const statusText = input.parentElement.querySelector('.status-text').textContent;
-                            const icon = statusText === 'OK' ? '✅' : '❌';
-                            centralDiagOutput += `${icon} Central ${i + 1}: ${input.value}\n`;
-                        }
-                    });
+                    
 
                     // Diagonal
                     const diagonalInputs = piece.querySelectorAll('.diagonal-value');
@@ -705,12 +693,12 @@
                         if (input.value) {
                             const statusText = input.parentElement.querySelector('.status-text').textContent;
                             const icon = statusText === 'OK' ? '✅' : '❌';
-                            centralDiagOutput += `${icon} Diag. Mesa ${i + 1}: ${input.value}\n`;
+                            centralDiagOutput += `${icon} Central Mesa ${i + 1}: ${input.value}\n`;
                         }
                     });
 
                     if (centralDiagOutput) {
-                        report += `*CENTRAL E DIAGONAL*\n` + centralDiagOutput;
+                        report += `*DIAGONAL MESA*\n` + centralDiagOutput;
                     }
                     
                     report += '\n-------------------\n\n';
