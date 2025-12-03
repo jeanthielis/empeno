@@ -479,7 +479,6 @@
                             <div class="status-indicator"><div class="status-dot"></div><span class="status-text"></span></div>
                         </div>
                         
-                       
                     </div>
                 `;
 
@@ -527,14 +526,17 @@
                 const line = document.getElementById('line').value;
                 const isCentral = sideInput.classList.contains('central-side-value');
                 const isDiagonal = sideInput.classList.contains('diagonal-value');
-                const isVerticalMesa = sideInput.classList.contains('vertical-mesa-value');
+                // const isVerticalMesa = sideInput.classList.contains('vertical-mesa-value'); // REMOVIDO para que caia no ELSE
                 
                 let isValid = false;
                 
-                if (isCentral || isDiagonal || isVerticalMesa) {
+                // CORREÇÃO: Removida a verificação isVerticalMesa daqui.
+                // Agora apenas Central e Diagonal usam o range de 1.80
+                if (isCentral || isDiagonal) {
                     isValid = value >= -1.80 && value <= 1.80;
                 } else {
-                    // Lateral Vertical (antigo side-value)
+                    // Lateral Vertical (antigo side-value) E Vertical Mesa
+                    // Agora ambos obedecem a regra da linha selecionada
                     if (line === '1') {
                         isValid = value >= -0.40 && value <= 1.00;
                     } else if (line === '2' || line === '3') {
@@ -638,11 +640,11 @@
                 report += `PEÇAS ANALISADAS:\n`;
                 report += `===================\n\n`;
 
-                report += `Range Lateral: ${rangeLateral}\n`;
+                report += `Range Lateral/Mesa: ${rangeLateral}\n`;
                 report += `Range Central: ${rangeCentral}\n\n`;
                 
                 // Mapeamento de letras para os lados
-                const letters = ['A', 'B', 'C', 'D','E', 'F', 'G', 'H'];
+                const letters = ['A', 'B', 'C', 'D','E', 'F'];
 
                 const pieces = document.querySelectorAll('.piece-container');
                 pieces.forEach((piece, index) => {
@@ -675,26 +677,26 @@
                     });
 
                     if (verticalMesaOutput) {
-                        report += `*DIAGONAL MESA*\n` + verticalMesaOutput + `\n`;
+                        report += `*VERTICAL MESA*\n` + verticalMesaOutput + `\n`;
                     }
                     
                     // -- SEÇÃO 3: CENTRAL E DIAGONAL --
                     let centralDiagOutput = "";
                     
-                    
-
-                    // Diagonal
-                    const diagonalInputs = piece.querySelectorAll('.diagonal-value');
-                    diagonalInputs.forEach((input, i) => {
+                    // Central
+                    const centralInputs = piece.querySelectorAll('.central-side-value');
+                    centralInputs.forEach((input, i) => {
                         if (input.value) {
                             const statusText = input.parentElement.querySelector('.status-text').textContent;
                             const icon = statusText === 'OK' ? '✅' : '❌';
-                            centralDiagOutput += `${icon} Central Mesa ${i + 1}: ${input.value}\n`;
-                        }
+                            centralDiagOutput += `${icon} Lado ${letters[i+4]}: ${input.value}\n`;
+                        } 
                     });
 
+                   
+
                     if (centralDiagOutput) {
-                        report += `*DIAGONAL MESA*\n` + centralDiagOutput;
+                        report += `*CENTRAL MESA*\n` + centralDiagOutput;
                     }
                     
                     report += '\n-------------------\n\n';
