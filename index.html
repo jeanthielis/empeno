@@ -59,6 +59,20 @@
 
         .form-group {
             margin-bottom: 16px;
+            width: 100%;
+        }
+
+        /* Nova classe para colocar inputs na mesma linha */
+        .input-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        /* Ajuste para que o form-group dentro da row não tenha margem inferior duplicada */
+        .input-row .form-group {
+            margin-bottom: 0;
         }
 
         label {
@@ -260,14 +274,32 @@
         </header>
 
         <div class="card">
-            <div class="form-group">
-                <label for="line">Linha de Produção</label>
-                <select id="line">
-                    <option value="">Selecione a linha</option>
-                    <option value="1">Linha 1</option>
-                    <option value="2">Linha 2</option>
-                    <option value="3">Linha 3</option>
-                </select>
+            <div class="input-row">
+                <div class="form-group">
+                    <label for="line">Linha</label>
+                    <select id="line">
+                        <option value="">Selecione</option>
+                        <option value="1">Linha 1</option>
+                        <option value="2">Linha 2</option>
+                        <option value="3">Linha 3</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="format">Formato</label>
+                    <select id="format">
+                        <option value="">Selecione</option>
+                        <option value="33x61">33x61</option>
+                        <option value="32x60">32x60</option>
+                        <option value="45x90">45x90</option>
+                        <option value="26x106">26x106</option>
+                        <option value="20x120">20x120</option>
+                        <option value="60x120">60x120</option>
+                        <option value="100x100">100x100</option>
+                        <option value="120x120">120x120</option>
+                        <option value="90x180">90x180</option>
+                    </select>
+                </div>
             </div>
 
             <div class="form-group">
@@ -327,7 +359,8 @@
             const copyReportBtn = document.getElementById('copy-report');
             const shareWhatsappBtn = document.getElementById('share-whatsapp');
             
-            const inputsToWatch = ['line', 'reference', 'batch', 'team', 'name'];
+            // Adicionado 'format' na lista de inputs monitorados
+            const inputsToWatch = ['line', 'format', 'reference', 'batch', 'team', 'name'];
 
             loadState();
 
@@ -361,7 +394,8 @@
             });
 
             function startNewAnalysis() {
-                if (confirm('Tem certeza? Isso apagará a Referência, Lote e todas as medidas atuais. A Equipe e o Nome serão mantidos.')) {
+                // Nota: O formato e a linha são mantidos (setup), apaga-se referência e lote.
+                if (confirm('Tem certeza? Isso apagará a Referência, Lote e todas as medidas atuais. A Equipe, Nome, Linha e Formato serão mantidos.')) {
                     document.getElementById('reference').value = '';
                     document.getElementById('batch').value = '';
                     piecesContainer.innerHTML = '';
@@ -411,7 +445,6 @@
                 const pieceDiv = document.createElement('div');
                 pieceDiv.className = 'piece-container';
                 
-                // HTML Organizado com Títulos de Seção
                 pieceDiv.innerHTML = `
                     <div class="piece-header">
                         <span class="piece-title">Peça ${pieceCount}</span>
@@ -526,17 +559,12 @@
                 const line = document.getElementById('line').value;
                 const isCentral = sideInput.classList.contains('central-side-value');
                 const isDiagonal = sideInput.classList.contains('diagonal-value');
-                // const isVerticalMesa = sideInput.classList.contains('vertical-mesa-value'); // REMOVIDO para que caia no ELSE
                 
                 let isValid = false;
                 
-                // CORREÇÃO: Removida a verificação isVerticalMesa daqui.
-                // Agora apenas Central e Diagonal usam o range de 1.80
                 if (isCentral || isDiagonal) {
                     isValid = value >= -1.80 && value <= 1.80;
                 } else {
-                    // Lateral Vertical (antigo side-value) E Vertical Mesa
-                    // Agora ambos obedecem a regra da linha selecionada
                     if (line === '1') {
                         isValid = value >= -0.40 && value <= 1.00;
                     } else if (line === '2' || line === '3') {
@@ -558,6 +586,7 @@
             function saveState() {
                 const state = {
                     line: document.getElementById('line').value,
+                    format: document.getElementById('format').value, // Salva o formato
                     reference: document.getElementById('reference').value,
                     batch: document.getElementById('batch').value,
                     team: document.getElementById('team').value,
@@ -587,6 +616,7 @@
                     const state = JSON.parse(savedState);
                     
                     document.getElementById('line').value = state.line || '';
+                    document.getElementById('format').value = state.format || ''; // Carrega o formato
                     document.getElementById('reference').value = state.reference || '';
                     document.getElementById('batch').value = state.batch || '';
                     document.getElementById('team').value = state.team || savedTeam || '';
@@ -606,12 +636,13 @@
 
             function generateReport() {
                 const line = document.getElementById('line').value;
+                const format = document.getElementById('format').value; // Pega valor do formato
                 const reference = document.getElementById('reference').value;
                 const batch = document.getElementById('batch').value;
                 const team = document.getElementById('team').value;
                 const name = document.getElementById('name').value;
 
-                if (!line || !reference || !batch || !team || !name) {
+                if (!line || !format || !reference || !batch || !team || !name) {
                     alert('Por favor, preencha todos os campos obrigatórios.');
                     return;
                 }
@@ -633,6 +664,7 @@
                 report += `===================\n`;
                 report += `Data: ${dateStr} - Hora: ${timeStr}\n\n`;
                 report += `Linha: ${line}\n`;
+                report += `Formato: ${format}\n`; // Adicionado ao relatório
                 report += `Referência: ${reference}\n`;
                 report += `Lote: ${batch}\n`;
                 report += `Equipe: ${team}\n`;
@@ -643,14 +675,12 @@
                 report += `Range Lateral/Mesa: ${rangeLateral}\n`;
                 report += `Range Central: ${rangeCentral}\n\n`;
                 
-                // Mapeamento de letras para os lados
                 const letters = ['A', 'B', 'C', 'D','E', 'F'];
 
                 const pieces = document.querySelectorAll('.piece-container');
                 pieces.forEach((piece, index) => {
                     report += `>> PEÇA ${index + 1} <<\n\n`;
                     
-                    // -- SEÇÃO 1: LATERAL VERTICAL --
                     let lateralOutput = "";
                     const sideInputs = piece.querySelectorAll('.side-value');
                     sideInputs.forEach((input, i) => {
@@ -665,7 +695,6 @@
                         report += `*VERTICAL LATERAL*\n` + lateralOutput + `\n`;
                     }
 
-                    // -- SEÇÃO 2: VERTICAL MESA --
                     let verticalMesaOutput = "";
                     const verticalMesaInputs = piece.querySelectorAll('.vertical-mesa-value');
                     verticalMesaInputs.forEach((input, i) => {
@@ -680,10 +709,8 @@
                         report += `*HORIZONTAL MESA*\n` + verticalMesaOutput + `\n`;
                     }
                     
-                    // -- SEÇÃO 3: CENTRAL E DIAGONAL --
                     let centralDiagOutput = "";
                     
-                    // Central
                     const centralInputs = piece.querySelectorAll('.central-side-value');
                     centralInputs.forEach((input, i) => {
                         if (input.value) {
@@ -692,8 +719,6 @@
                             centralDiagOutput += `${icon} Lado ${letters[i+4]}: ${input.value}\n`;
                         } 
                     });
-
-                   
 
                     if (centralDiagOutput) {
                         report += `*CENTRAL MESA*\n` + centralDiagOutput;
